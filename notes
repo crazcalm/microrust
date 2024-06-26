@@ -1,0 +1,83 @@
+# Notes (for people with bad memory):
+
+## WSL
+WSL, by default, does not have access to the usb ports. In order to give WSL access to the ports, you have to install this program (https://github.com/dorssel/usbipd-win) and then run the following commands (powershell as admin user).
+
+See the list of ports.
+```
+usbipd list
+```
+
+Need to bind the port (If the port is already shared, then you can skip this step).
+```
+usbipd bind --busid <id>
+```
+
+Need to attach usb port to WSL.
+```
+usbipd attach --wsl --busid <id>
+```
+
+## Microbit Rust book (https://droogmic.github.io/microrust/)
+
+The book is old, but most of the steps work just fine. The biggest issue I had with it was that is was missing the following line from the rust file.
+
+```
+extern crate microbit;
+```
+After I added that line, all of the building/linking worked with the default cargo settings.
+
+### Verify permissions
+The following the command will show us of WSL has access to the USB ports for the microbit
+
+```
+lsusb | grep -i NXP
+```
+
+Note: The udev rules section of the linux install must be done prior to this step (Must give your uses access to the device)
+
+
+### OpenOCD Connection Check
+
+The microbit has it own debugger. The process of uploading code to the device is:
+
+1. Connect to debugger on the device (use OpenOCD -- Once connected, leave it open)
+2. Use gdb for wrap binary
+3. In gdb, connect to the device's debugger
+4. In gdb, upload code to the device.
+5. In gdb, you can run the program and start the debug process.
+
+Here, we would like to verify that we can connect to the debugger on the device.
+
+```
+openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg
+```
+
+### Verifying that the binary was created correctly
+
+In the below, we are looking for the debug stuff (if it is a debug build), and verify that stuff gets sent to the address that you set in the memory.x file (vector_table, bss, uninit stuff i think).
+```
+cargo size -- -Ax
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+microrust-start  :
+section                size         addr
+.vector_table          0xa8          0x0
+.text                  0x78         0xa8
+.rodata                   0        0x120
+.data                     0   0x20000000
+.gnu.sgstubs              0        0x120
+.bss                      0   0x20000000
+.uninit                   0   0x20000000
+.debug_abbrev        0x1cb1          0x0
+.debug_info         0x25fea          0x0
+.debug_aranges       0x1700          0x0
+.debug_ranges       0x15ca0          0x0
+.debug_str          0x3efad          0x0
+.comment               0x73          0x0
+.ARM.attributes        0x32          0x0
+.debug_frame         0x4cec          0x0
+.debug_line         0x23fa9          0x0
+.debug_loc             0x9d          0x0
+Total               0xa6edf
+```
+

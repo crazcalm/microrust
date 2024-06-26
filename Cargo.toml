@@ -1,0 +1,9 @@
+[package]
+name = "microrust-start"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cortex-m-rt = "~0.7"
+microbit = "~0.14"
+panic-halt = "0.2.0"
